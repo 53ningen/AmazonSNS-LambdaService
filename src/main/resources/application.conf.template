@@ -1,0 +1,4 @@
+
+amazon_sns.region = "**********"
+amazon_sns.access_key = "**********"
+amazon_sns.access_secret = "**********"

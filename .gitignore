@@ -12,3 +12,4 @@ dist
 /RUNNING_PID
 /.settings
 .DS_Store
+application.conf
