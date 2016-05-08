@@ -1,7 +1,5 @@
 package com.github.gomi.snsservice
 
-import java.util.logging.Logger
-
 import com.amazonaws.auth.{AWSCredentials, BasicAWSCredentials}
 import com.amazonaws.regions.{Region, Regions}
 import com.amazonaws.services.lambda.runtime.events.SNSEvent
@@ -9,16 +7,16 @@ import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
 import com.amazonaws.services.sns.AmazonSNSClient
 import com.amazonaws.services.sns.model.{DeleteEndpointRequest, GetEndpointAttributesRequest}
 import com.typesafe.config.ConfigFactory
+import com.typesafe.scalalogging.slf4j.StrictLogging
 import org.json4s._
 import org.json4s.native.JsonMethods._
 
 import scala.collection.JavaConversions._
 
-object DeleteEndpoint extends RequestHandler[SNSEvent, Unit] {
+object DeleteEndpoint extends RequestHandler[SNSEvent, Unit] with StrictLogging {
 
   private type EndpointArn = String
 
-  private val logger = Logger.getGlobal
   private val conf = ConfigFactory.load()
   private lazy val credential: AWSCredentials = new BasicAWSCredentials(conf.getString("amazon_sns.access_key"), conf.getString("amazon_sns.access_secret"))
   private lazy val snsClient: AmazonSNSClient = new AmazonSNSClient(credential).withRegion(Region.getRegion(Regions.fromName(conf.getString("amazon_sns.region"))))
@@ -40,7 +38,7 @@ object DeleteEndpoint extends RequestHandler[SNSEvent, Unit] {
         }
       }
     } else {
-      logger.warning(s"receive empty message: message_id = ${record.getSNS.getMessageId}")
+      logger.error(s"receive empty message: message_id = ${record.getSNS.getMessageId}")
     }
   }
 
@@ -59,7 +57,7 @@ object DeleteEndpoint extends RequestHandler[SNSEvent, Unit] {
       result.getAttributes.toMap.get("Enabled").map(_ == "true")
     } catch {
       case e: Throwable =>
-        e.printStackTrace()
+        logger.error("failed to get endpoint attributes", e)
         None
     }
   }
@@ -69,7 +67,7 @@ object DeleteEndpoint extends RequestHandler[SNSEvent, Unit] {
     try {
       snsClient.deleteEndpoint(request)
     } catch {
-      case e: Throwable => e.printStackTrace()
+      case e: Throwable => logger.error("failed to delete endpoint", e)
     }
   }
 
